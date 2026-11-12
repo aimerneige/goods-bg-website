@@ -35,6 +35,25 @@
         <div id="scenes" class="chips"></div>
       </section>
 
+      <section id="mySection">
+        <h2>我的预设 <small>保存配色 + 背景 + 粒子 + 调节</small></h2>
+        <div class="row">
+          <input id="presetName" type="text" maxlength="30" placeholder="起个名字，如：生日应援" />
+          <button id="btnSavePreset" class="primary">💾 保存当前</button>
+        </div>
+        <div id="myPresets" class="presets"></div>
+        <div class="row">
+          <button id="btnImportCode">📥 导入分享码</button>
+          <button id="btnExport" title="导出为文件，方便换设备（不含图片）">⬇ 导出全部</button>
+          <label class="btn ghost" for="importFile">⬆ 导入文件</label>
+          <input type="file" id="importFile" accept=".json,application/json" hidden />
+        </div>
+        <div id="importBox" class="row" hidden>
+          <input id="importCode" type="text" placeholder="粘贴分享码或分享链接" />
+          <button id="btnImportOk" class="primary">导入</button>
+        </div>
+      </section>
+
       <section>
         <h2>配色</h2>
         <div id="palettes" class="swatches"></div>

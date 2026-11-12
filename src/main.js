@@ -2,6 +2,7 @@ import { ShaderBackground } from "./shaderBg.js";
 import { OVERLAYS, createOverlay, initEngine } from "./overlays.js";
 import { PALETTES, BG_MODES, SCENES } from "./presets.js";
 import { ImageBackground } from "./imageBg.js";
+import * as UP from "./userPresets.js";
 
 const $ = (s) => document.querySelector(s);
 const STORE_KEY = "goods-photo-bg:v1";
@@ -224,6 +225,74 @@ function buildUI() {
     });
   }
 
+  // 我的预设
+  renderPresets();
+  $("#btnSavePreset").onclick = savePreset;
+  $("#presetName").addEventListener("keydown", (e) => e.key === "Enter" && savePreset());
+  $("#myPresets").onclick = async (e) => {
+    const b = e.target.closest("button");
+    const item = e.target.closest(".preset");
+    if (!b || !item) return;
+    const p = UP.loadList().find((x) => x.id === item.dataset.id);
+    if (!p) return;
+    if (b.classList.contains("apply")) {
+      const img = p.hasImg ? await UP.loadPresetImage(p.id) : null;
+      await applyPreset(p.data, { image: img, hideImage: !p.hasImg });
+      toast(`已应用「${p.name}」`);
+    } else if (b.classList.contains("share")) {
+      sharePreset(p.name, p.data, p.hasImg);
+    } else if (b.classList.contains("del")) {
+      if (!confirm(`删除预设「${p.name}」？`)) return;
+      await UP.removePreset(p.id);
+      renderPresets();
+    }
+  };
+  $("#myPresets").ondblclick = (e) => {
+    const item = e.target.closest(".preset");
+    const p = item && UP.loadList().find((x) => x.id === item.dataset.id);
+    if (!p) return;
+    const name = prompt("重命名预设", p.name)?.trim();
+    if (name) { UP.renamePreset(p.id, name.slice(0, 30)); renderPresets(); }
+  };
+  $("#btnImportCode").onclick = () => {
+    $("#importBox").hidden = !$("#importBox").hidden;
+    if (!$("#importBox").hidden) $("#importCode").focus();
+  };
+  const doImport = async () => {
+    try {
+      const { name, data } = UP.decodeShare($("#importCode").value);
+      await UP.addPreset(name, data);
+      await applyPreset(data);
+      renderPresets();
+      $("#importCode").value = "";
+      $("#importBox").hidden = true;
+      toast(`已导入并应用「${name}」`);
+    } catch (e) {
+      toast(e.message || "导入失败");
+    }
+  };
+  $("#btnImportOk").onclick = doImport;
+  $("#importCode").addEventListener("keydown", (e) => e.key === "Enter" && doImport());
+  $("#btnExport").onclick = () => {
+    if (!UP.loadList().length) return toast("还没有可导出的预设");
+    const blob = new Blob([UP.exportJSON()], { type: "application/json" });
+    const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: "拍谷背景-我的预设.json" });
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  $("#importFile").addEventListener("change", async (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    try {
+      const n = UP.importJSON(await f.text());
+      renderPresets();
+      toast(`已导入 ${n} 个预设`);
+    } catch (err) {
+      toast(err.message || "导入失败");
+    }
+  });
+
   // 自定义图片
   $("#imgFile").addEventListener("change", (e) => {
     const f = e.target.files?.[0];
@@ -331,6 +400,81 @@ function applyScene(i) {
   state.overlays = [...s.overlays];
   commit(true);
   toast(s.name);
+}
+
+// ---------- 我的预设 ----------
+const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+function renderPresets() {
+  $("#myPresets").innerHTML = UP.loadList()
+    .map((p) => {
+      const c = p.data.palette || state.palette;
+      const sw = `linear-gradient(90deg, ${c.bg} 0 25%, ${c.c1} 25% 50%, ${c.c2} 50% 75%, ${c.c3} 75%)`;
+      const desc = [BG_MODES[p.data.bg], ...(p.data.overlays || []).map((k) => OVERLAYS[k]?.name)].filter(Boolean).join(" · ");
+      return `<div class="preset" data-id="${esc(p.id)}">
+        <button class="apply" title="${esc(desc)}（双击重命名）"><i class="sw" style="--sw:${sw}"></i><span>${esc(p.name)}</span>${p.hasImg ? "🖼" : ""}</button>
+        <button class="share" title="复制分享码">🔗</button>
+        <button class="del" title="删除">✕</button>
+      </div>`;
+    })
+    .join("");
+}
+
+async function savePreset() {
+  const input = $("#presetName");
+  const name = input.value.trim().slice(0, 30) || `我的预设 ${UP.loadList().length + 1}`;
+  const image = imgBg.hasImage && state.imgOn ? imgBg.blob : null;
+  await UP.addPreset(name, UP.snapshot(state), image);
+  input.value = "";
+  renderPresets();
+  toast(`已保存「${name}」${image ? "（含图片）" : ""}`);
+}
+
+/** 应用预设数据。image: 预设自带图片；hideImage: 预设不含图片时隐藏当前图片 */
+async function applyPreset(data, { image = null, hideImage = false } = {}) {
+  Object.assign(state, data);
+  if (data.palette) {
+    const hit = PALETTES.find((x) => ["bg", "c1", "c2", "c3"].every((k) => x[k].toLowerCase() === data.palette[k].toLowerCase()));
+    state.paletteName = hit ? hit.name : null;
+  }
+  state.scene = -1;
+  if (image) {
+    await imgBg.setImage(image);
+    state.imgOn = true;
+  } else if (hideImage) {
+    state.imgOn = false;
+  }
+  commit(true);
+}
+
+async function sharePreset(name, data, hasImg) {
+  const code = UP.encodeShare(name, data);
+  const link = UP.shareLink(code);
+  const text = link || code;
+  let copied = false;
+  try {
+    await navigator.clipboard.writeText(text);
+    copied = true;
+  } catch {
+    prompt("复制下面的内容发给朋友：", text);
+  }
+  if (copied) {
+    toast((link ? "分享链接已复制" : "分享码已复制，对方在「导入分享码」里粘贴即可") + (hasImg ? "（图片不会被分享）" : ""));
+  }
+}
+
+/** 打开带 #p=分享码 的链接时自动加载 */
+async function loadFromHash() {
+  if (!/[#&]p=/.test(location.hash)) return;
+  try {
+    const { name, data } = UP.decodeShare(location.hash);
+    await applyPreset(data);
+    $("#presetName").value = name;
+    toast(`已加载分享的「${name}」，点「保存当前」可存到我的预设`);
+  } catch (e) {
+    toast(e.message || "分享链接无效");
+  }
+  history.replaceState(null, "", location.pathname + location.search);
 }
 
 function randomize() {
@@ -457,4 +601,6 @@ document.body.classList.add("panel-open");
 bumpIdle();
 initEngine().then(rebuildOverlays);
 imgBg.restore().then(() => applyImage());
+loadFromHash();
+addEventListener("hashchange", loadFromHash);
 keepAwake();
