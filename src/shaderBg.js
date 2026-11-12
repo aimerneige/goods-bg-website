@@ -465,7 +465,7 @@ export class ShaderBackground {
     requestAnimationFrame(this._loop);
     const dt = Math.min((now - this._last) / 1000, 0.1);
     this._last = now;
-    if (this.paused) return;
+    if (this.paused || this.skip) return;
     this.time += dt * this.speed;
     this.render();
   }

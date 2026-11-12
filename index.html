@@ -12,6 +12,7 @@
   </head>
   <body>
     <div id="stage">
+      <div id="imgLayer" hidden></div>
       <canvas id="bg"></canvas>
       <div id="overlays"></div>
     </div>
@@ -54,6 +55,31 @@
         <div id="bgModes" class="grid"></div>
       </section>
 
+      <section id="imgSection">
+        <h2>自定义图片 <small>也可以直接拖入或粘贴图片</small></h2>
+        <div class="row">
+          <label class="btn" for="imgFile">🖼 上传图片</label>
+          <input type="file" id="imgFile" accept="image/*" hidden />
+          <button id="btnImgPalette" class="needs-img" title="用图片的颜色生成配色，粒子和特效会跟着变">🎨 从图片取色</button>
+          <button id="btnImgClear" class="needs-img">🗑 移除</button>
+        </div>
+        <div id="imgControls" class="needs-img">
+          <label class="check"><input type="checkbox" id="imgOn" /> 显示图片</label>
+          <label class="check"><input type="checkbox" id="imgMotion" /> 缓慢推拉（让静态图有动感）</label>
+          <div class="seg" id="imgFit">
+            <span>显示</span><button data-v="cover">铺满</button><button data-v="contain">完整</button><button data-v="tile">平铺</button>
+          </div>
+          <div class="seg" id="imgBlend">
+            <span>特效混合</span><button data-v="screen">发光</button><button data-v="normal">覆盖</button><button data-v="overlay">叠加</button><button data-v="soft-light">柔光</button>
+          </div>
+          <div class="sliders">
+            <label>图片模糊 <input type="range" id="sImgBlur" min="0" max="30" step="1" /><output></output></label>
+            <label>图片亮度 <input type="range" id="sImgBright" min="0.3" max="1.5" step="0.05" /><output></output></label>
+            <label>背景特效 <input type="range" id="sImgFx" min="0" max="1" step="0.05" /><output></output></label>
+          </div>
+        </div>
+      </section>
+
       <section>
         <h2>粒子叠加 <small>可多选</small></h2>
         <div id="overlayList" class="grid"></div>
@@ -72,6 +98,7 @@
 
       <footer>
         <p>快捷键：H 面板 · F 全屏 · 空格 暂停 · R 随机 · ←/→ 场景</p>
+        <p>上传的图片只保存在本机浏览器里，不会上传到任何地方。</p>
         <p>闲置 3 秒自动隐藏按钮和鼠标；全屏时尽量保持屏幕常亮。</p>
       </footer>
     </aside>

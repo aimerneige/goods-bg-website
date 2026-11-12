@@ -1,6 +1,7 @@
 import { ShaderBackground } from "./shaderBg.js";
 import { OVERLAYS, createOverlay, initEngine } from "./overlays.js";
 import { PALETTES, BG_MODES, SCENES } from "./presets.js";
+import { ImageBackground } from "./imageBg.js";
 
 const $ = (s) => document.querySelector(s);
 const STORE_KEY = "goods-photo-bg:v1";
@@ -18,6 +19,14 @@ const DEFAULT = {
   size: 1,
   pOpacity: 1,
   quality: 0.75,
+  // 自定义图片
+  imgOn: true,
+  imgFit: "cover",
+  imgBlur: 0,
+  imgBright: 1,
+  imgFx: 0.5,
+  imgBlend: "screen",
+  imgMotion: false,
 };
 
 let state;
@@ -37,7 +46,39 @@ try {
   toast("当前设备不支持 WebGL，背景特效不可用");
 }
 
+const imgBg = new ImageBackground($("#imgLayer"));
+
+function applyImage() {
+  const show = imgBg.hasImage && state.imgOn;
+  document.body.classList.toggle("has-img", imgBg.hasImage);
+  $("#imgLayer").hidden = !show;
+  const canvas = $("#bg");
+  if (show) {
+    imgBg.apply({ fit: state.imgFit, blur: state.imgBlur, brightness: state.imgBright, motion: state.imgMotion, bgColor: state.palette.bg, paused });
+    canvas.style.opacity = state.imgFx;
+    canvas.style.mixBlendMode = state.imgBlend;
+  } else {
+    canvas.style.opacity = "";
+    canvas.style.mixBlendMode = "";
+  }
+  // 特效透明度为 0 时不渲染着色器，省电
+  if (bg) bg.skip = show && state.imgFx <= 0;
+  canvas.style.visibility = show && state.imgFx <= 0 ? "hidden" : "";
+}
+
+async function useImage(file) {
+  try {
+    await imgBg.setImage(file);
+    state.imgOn = true;
+    commit(false);
+    toast("已设置背景图片，可在面板里调整显示方式");
+  } catch (e) {
+    toast(e.message || "图片加载失败");
+  }
+}
+
 function applyBg() {
+  applyImage();
   if (!bg) {
     document.body.style.background = state.palette.bg;
     return;
@@ -167,18 +208,78 @@ function buildUI() {
     sSize: ["size", true],
     sPOpacity: ["pOpacity", false],
     sQuality: ["quality", false],
+    sImgBlur: ["imgBlur", false],
+    sImgBright: ["imgBright", false],
+    sImgFx: ["imgFx", false],
   };
   for (const [id, [key, needsRebuild]] of Object.entries(sliders)) {
     const input = $("#" + id);
     input.addEventListener("input", () => {
       state[key] = +input.value;
-      input.nextElementSibling.value = (+input.value).toFixed(2);
+      input.nextElementSibling.value = (+input.value).toFixed(+input.step >= 1 ? 0 : 2);
       applyBg();
       $("#overlays").style.opacity = state.pOpacity;
       save();
       if (needsRebuild) rebuildSoon(350);
     });
   }
+
+  // 自定义图片
+  $("#imgFile").addEventListener("change", (e) => {
+    const f = e.target.files?.[0];
+    if (f) useImage(f);
+    e.target.value = "";
+  });
+  $("#btnImgClear").onclick = async () => {
+    await imgBg.clear();
+    commit(false);
+    toast("已移除图片");
+  };
+  $("#btnImgPalette").onclick = async () => {
+    try {
+      const p = await imgBg.extractPalette(isLight(state.palette.bg));
+      if (!p) return toast("没能从图片里取到颜色");
+      state.palette = p;
+      state.paletteName = null;
+      commit(true);
+      toast("已用图片颜色生成配色");
+    } catch (e) {
+      console.error(e);
+      toast("取色失败");
+    }
+  };
+  $("#imgOn").onchange = (e) => { state.imgOn = e.target.checked; commit(false); };
+  $("#imgMotion").onchange = (e) => { state.imgMotion = e.target.checked; commit(false); };
+  for (const [id, key] of [["#imgFit", "imgFit"], ["#imgBlend", "imgBlend"]]) {
+    $(id).onclick = (e) => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      state[key] = b.dataset.v;
+      commit(false);
+    };
+  }
+  // 拖入 / 粘贴图片
+  let dragDepth = 0;
+  addEventListener("dragenter", (e) => {
+    if (![...(e.dataTransfer?.types || [])].includes("Files")) return;
+    dragDepth++;
+    document.body.classList.add("drag-over");
+  });
+  addEventListener("dragleave", () => {
+    if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove("drag-over"); }
+  });
+  addEventListener("dragover", (e) => e.preventDefault());
+  addEventListener("drop", (e) => {
+    e.preventDefault();
+    dragDepth = 0;
+    document.body.classList.remove("drag-over");
+    const f = [...(e.dataTransfer?.files || [])].find((x) => x.type.startsWith("image/"));
+    if (f) useImage(f);
+  });
+  addEventListener("paste", (e) => {
+    const f = [...(e.clipboardData?.files || [])].find((x) => x.type.startsWith("image/"));
+    if (f) useImage(f);
+  });
 
   // 按钮
   $("#toggle").onclick = () => togglePanel(true);
@@ -201,12 +302,16 @@ function syncUI() {
   document.querySelectorAll("#bgModes button").forEach((b) => b.classList.toggle("active", b.dataset.k === state.bg));
   document.querySelectorAll("#overlayList button").forEach((b) => b.classList.toggle("active", state.overlays.includes(b.dataset.k)));
   document.querySelectorAll("#scenes button").forEach((b) => b.classList.toggle("active", +b.dataset.i === state.scene));
-  const vals = { sBright: state.bright, sBgSpeed: state.bgSpeed, sDensity: state.density, sSpeed: state.speed, sSize: state.size, sPOpacity: state.pOpacity, sQuality: state.quality };
+  const vals = { sImgBlur: state.imgBlur, sImgBright: state.imgBright, sImgFx: state.imgFx, sBright: state.bright, sBgSpeed: state.bgSpeed, sDensity: state.density, sSpeed: state.speed, sSize: state.size, sPOpacity: state.pOpacity, sQuality: state.quality };
   for (const [id, v] of Object.entries(vals)) {
     $("#" + id).value = v;
-    $("#" + id).nextElementSibling.value = (+v).toFixed(2);
+    $("#" + id).nextElementSibling.value = (+v).toFixed(+$("#" + id).step >= 1 ? 0 : 2);
   }
   document.querySelector('meta[name="theme-color"]').content = state.palette.bg;
+  $("#imgOn").checked = state.imgOn;
+  $("#imgMotion").checked = state.imgMotion;
+  document.querySelectorAll("#imgFit button").forEach((b) => b.classList.toggle("active", b.dataset.v === state.imgFit));
+  document.querySelectorAll("#imgBlend button").forEach((b) => b.classList.toggle("active", b.dataset.v === state.imgBlend));
 }
 
 function commit(rebuild) {
@@ -296,6 +401,7 @@ function togglePause() {
   paused = !paused;
   if (bg) bg.paused = paused;
   layers.forEach((l) => (paused ? l.inst?.pause() : l.inst?.play()));
+  $("#imgLayer").style.animationPlayState = paused ? "paused" : "running";
   $("#btnPause").textContent = paused ? "▶ 继续" : "⏸ 暂停";
   toast(paused ? "已暂停（定格画面）" : "继续播放");
 }
@@ -350,4 +456,5 @@ syncUI();
 document.body.classList.add("panel-open");
 bumpIdle();
 initEngine().then(rebuildOverlays);
+imgBg.restore().then(() => applyImage());
 keepAwake();
