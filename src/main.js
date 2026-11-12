@@ -135,7 +135,7 @@ function buildUI() {
   };
 
   // 背景模式
-  const bgIcons = { solid: "■", gradient: "◐", aurora: "〰", rays: "☀", lines: "≋", silk: "◠", nebula: "✺", bokeh: "◍", laser: "◈", caustics: "◌", spotlight: "▽", halo: "◎" };
+  const bgIcons = { solid: "■", gradient: "◐", aurora: "〰", rays: "☀", lines: "≋", silk: "◠", nebula: "✺", bokeh: "◍", laser: "◈", caustics: "◌", spotlight: "▽", halo: "◎", lightleak: "◑", galaxy: "🌀", clouds: "☁", neon: "▦", watercolor: "🖌", polka: "⁘", heartgrid: "♡" };
   $("#bgModes").innerHTML = Object.entries(BG_MODES)
     .map(([k, n]) => `<button data-k="${k}"><i>${bgIcons[k] || "•"}</i>${n}</button>`)
     .join("");

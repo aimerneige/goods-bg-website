@@ -244,6 +244,136 @@ vec3 effect(vec2 uv, vec2 p, float t){
   col += uC3 * exp(-r*12.0) * 0.5;
   return col;
 }`,
+
+  lightleak: /* glsl */ `
+vec3 screen(vec3 a, vec3 b){ return 1.0 - (1.0 - a)*(1.0 - b); }
+vec3 effect(vec2 uv, vec2 p, float t){
+  vec3 col = uBg;
+  for (int i = 0; i < 4; i++){
+    float fi = float(i);
+    vec2 c = vec2(sin(t*0.07*(1.0 + fi*0.3) + fi*2.0)*0.9, cos(t*0.05*(1.0 + fi*0.2) + fi*1.3)*0.55);
+    vec3 lc = uC1;
+    if (i == 1) lc = uC2;
+    if (i == 2) lc = uC3;
+    if (i == 3) lc = vec3(1.0, 0.62, 0.35);
+    float w = exp(-dot(p - c, p - c)*2.5);
+    col = screen(col, lc*w*0.75);
+  }
+  float hue = dot(p, vec2(0.8, 0.5))*1.5 + t*0.03;
+  vec3 rb = 0.5 + 0.5*cos(6.28318*(hue + vec3(0.0, 0.33, 0.67)));
+  float band = exp(-pow(dot(p, normalize(vec2(-0.6, 1.0))) - 0.3*sin(t*0.08), 2.0)*25.0);
+  col = screen(col, rb*band*0.35);
+  col += (hash(gl_FragCoord.xy + fract(t)) - 0.5)*0.035;
+  return col;
+}`,
+
+  galaxy: /* glsl */ `
+vec3 effect(vec2 uv, vec2 p, float t){
+  vec2 q = p; q.y *= 1.6;
+  float ang = 0.3; q = mat2(cos(ang), -sin(ang), sin(ang), cos(ang))*q;
+  float r = length(q);
+  float a = atan(q.y, q.x) - t*0.04;
+  float arm = 0.5 + 0.5*sin(a*2.0 - log(r + 0.01)*5.0);
+  float ct = cos(t*0.04), st = sin(t*0.04);
+  vec2 rq = mat2(ct, -st, st, ct)*q;
+  float dens = pow(arm, 3.0) * exp(-r*2.2) * (0.4 + fbm(rq*5.0));
+  vec3 col = uBg + mix(uC1, uC2, smoothstep(0.0, 0.7, r))*dens*1.6;
+  col += uC3*exp(-r*9.0)*1.1 + uC1*exp(-r*3.5)*0.25;
+  col += stars(uv, t, 0.04);
+  return col;
+}`,
+
+  clouds: /* glsl */ `
+vec3 effect(vec2 uv, vec2 p, float t){
+  vec3 sky = mix(uBg, uC1, smoothstep(-0.6, 0.6, p.y)*0.75);
+  vec2 q = p*vec2(1.1, 2.2) + vec2(t*0.025, 0.0);
+  float n = fbm(q*1.5 + fbm(q*2.0 + t*0.01)*0.8);
+  float c = smoothstep(0.42, 0.78, n);
+  vec3 cloud = mix(uC3, vec3(1.0), 0.6) * (0.9 + 0.15*smoothstep(0.5, 0.9, n));
+  cloud = mix(cloud*0.78 + uC2*0.1 + uC1*0.08, cloud, smoothstep(0.45, 0.85, n));
+  vec3 col = mix(sky, cloud, c*0.95);
+  col += uC1*exp(-length(p - vec2(0.55, 0.35))*3.0)*0.25;
+  return col;
+}`,
+
+  neon: /* glsl */ `
+vec3 effect(vec2 uv, vec2 p, float t){
+  vec3 col = uBg;
+  float hz = -0.06;
+  if (p.y < hz){
+    float z = 0.35/(hz - p.y + 0.002);
+    vec2 g = vec2(p.x*z, z + t*1.2);
+    vec2 gl = abs(fract(g) - 0.5);
+    float line = min(gl.x, gl.y);
+    float lw = 0.025 + 0.012*z;
+    float fade = exp(-z*0.09);
+    col += uC1*smoothstep(lw, 0.0, line)*fade*1.2;
+    col += uC1*exp(-line*6.0)*0.12*fade;
+  } else {
+    vec2 sp = p - vec2(0.0, hz + 0.2);
+    float sr = length(sp);
+    float stripes = step(0.0, sin((p.y - hz)*90.0 - t*1.5)) + step(hz + 0.16, p.y);
+    float sun = smoothstep(0.205, 0.195, sr) * clamp(stripes, 0.0, 1.0);
+    vec3 sunCol = mix(uC2, uC3, clamp((sp.y + 0.2)/0.4, 0.0, 1.0));
+    col = mix(col, sunCol, sun);
+    col += uC2*exp(-sr*4.5)*0.35;
+    col += stars(uv, t, 0.03)*smoothstep(0.0, 0.3, p.y - hz);
+  }
+  col += uC2*exp(-abs(p.y - hz)*14.0)*0.55;
+  return col;
+}`,
+
+  watercolor: /* glsl */ `
+vec3 effect(vec2 uv, vec2 p, float t){
+  vec2 q = p*1.3;
+  vec2 w = vec2(fbm(q*1.5 + t*0.03), fbm(q*1.5 + 7.3 - t*0.025));
+  float n1 = fbm(q*1.2 + w*1.5);
+  float n2 = fbm(q*1.6 - w*1.2 + 3.1);
+  float n3 = fbm(q*2.4 + w + 5.0);
+  vec3 col = uBg*(0.965 + 0.05*noise(gl_FragCoord.xy*0.35));
+  float m1 = smoothstep(0.42, 0.58, n1), e1 = smoothstep(0.44, 0.5, n1) - smoothstep(0.5, 0.6, n1);
+  col = mix(col, uC1, m1*0.45); col = mix(col, uC1*0.8, e1*0.15);
+  float m2 = smoothstep(0.47, 0.62, n2), e2 = smoothstep(0.5, 0.55, n2) - smoothstep(0.55, 0.65, n2);
+  col = mix(col, uC2, m2*0.4); col = mix(col, uC2*0.8, e2*0.12);
+  float m3 = smoothstep(0.56, 0.7, n3);
+  col = mix(col, uC3, m3*0.35);
+  return col;
+}`,
+
+  polka: /* glsl */ `
+vec3 effect(vec2 uv, vec2 p, float t){
+  vec2 q = p*6.0 + vec2(t*0.15, t*0.1);
+  vec2 id = floor(q); vec2 f = fract(q) - 0.5;
+  float h = hash(id);
+  float r = 0.17 + 0.06*sin(t*1.2 + h*6.28);
+  float d = length(f);
+  vec3 dc = mix(uC1, uC2, step(0.5, h)); dc = mix(dc, uC3, step(0.85, h));
+  vec3 col = mix(uBg, dc, smoothstep(r + 0.02, r - 0.02, d));
+  col *= 0.92 + 0.12*uv.y;
+  return col;
+}`,
+
+  heartgrid: /* glsl */ `
+float dot2(vec2 v){ return dot(v, v); }
+float sdHeart(vec2 p){
+  p.x = abs(p.x);
+  if (p.y + p.x > 1.0) return sqrt(dot2(p - vec2(0.25, 0.75))) - sqrt(2.0)/4.0;
+  return sqrt(min(dot2(p - vec2(0.0, 1.0)), dot2(p - 0.5*max(p.x + p.y, 0.0)))) * sign(p.x - p.y);
+}
+vec3 effect(vec2 uv, vec2 p, float t){
+  vec2 q = p*5.0 + vec2(t*0.12, -t*0.08);
+  vec2 id = floor(q); vec2 f = fract(q) - 0.5;
+  float h = hash(id);
+  float s = 0.36*(0.85 + 0.12*sin(t*1.5 + h*6.28));
+  vec2 hp = f/s; hp.y += 0.55;
+  float d = sdHeart(hp)*s;
+  vec3 hc = mix(uC1, uC2, step(0.5, h)); hc = mix(hc, uC3, step(0.88, h));
+  float ck = mod(id.x + id.y, 2.0);
+  vec3 col = mix(uBg, uBg*0.92 + uC3*0.06, ck);
+  col += hc*exp(-max(d, 0.0)*40.0)*0.25;
+  col = mix(col, hc, smoothstep(0.015, -0.015, d));
+  return col;
+}`,
 };
 
 const FOOTER = /* glsl */ `

@@ -57,7 +57,7 @@ button.active { background: rgba(190,150,255,.35); border-color: rgba(220,190,25
 .grid button { padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .grid button i { font-style: normal; font-size: 18px; line-height: 1.2; }
 
-.swatches { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.swatches { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; }
 .swatch {
   aspect-ratio: 1; border-radius: 10px; padding: 0; position: relative; overflow: hidden;
   border: 2px solid transparent;

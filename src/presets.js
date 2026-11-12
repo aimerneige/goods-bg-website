@@ -13,6 +13,7 @@ export const PALETTES = [
   { name: "樱花白", bg: "#fff1f5", c1: "#ffb3cf", c2: "#ffd9e6", c3: "#ffffff" },
   { name: "天空白", bg: "#e3f2ff", c1: "#8fcbff", c2: "#ffffff", c3: "#ffd6f0" },
   { name: "奶油", bg: "#fff7e8", c1: "#ffd59e", c2: "#ffc2c2", c3: "#ffffff" },
+  { name: "抹茶", bg: "#eef7e6", c1: "#8fd27a", c2: "#c8ecb4", c3: "#fffbe0" },
   { name: "纯黑", bg: "#000000", c1: "#ffffff", c2: "#9a9a9a", c3: "#ffffff" },
 ];
 
@@ -29,6 +30,13 @@ export const BG_MODES = {
   caustics: "水波光影",
   spotlight: "舞台聚光",
   halo: "光环",
+  lightleak: "胶片漏光",
+  galaxy: "星河漩涡",
+  clouds: "云朵天空",
+  neon: "霓虹网格",
+  watercolor: "水彩晕染",
+  polka: "波点",
+  heartgrid: "爱心格纹",
 };
 
 // 一键场景
@@ -51,4 +59,16 @@ export const SCENES = [
   { name: "神圣光环", palette: "暗夜紫", bg: "halo", overlays: ["feathers", "sparkle"] },
   { name: "白色羽毛", palette: "天空白", bg: "gradient", overlays: ["feathers", "sparkle"] },
   { name: "奶油甜心", palette: "奶油", bg: "bokeh", overlays: ["hearts", "starShapes"] },
+  { name: "烟花庆典", palette: "星空蓝紫", bg: "nebula", overlays: ["fireworks", "glitter"] },
+  { name: "雨夜霓虹", palette: "暗夜紫", bg: "neon", overlays: ["rain", "ripples"] },
+  { name: "秋日枫叶", palette: "日落", bg: "lightleak", overlays: ["maple", "bokeh"] },
+  { name: "蒲公英之梦", palette: "天空白", bg: "clouds", overlays: ["dandelion", "sparkle"] },
+  { name: "生日气球", palette: "彩虹糖", bg: "polka", overlays: ["balloons", "confetti"] },
+  { name: "公主殿堂", palette: "梦幻粉", bg: "halo", overlays: ["crowns", "bows", "diamonds"] },
+  { name: "水晶之光", palette: "冰雪", bg: "rays", overlays: ["diamonds", "sparkle"] },
+  { name: "银河漩涡", palette: "暗夜紫", bg: "galaxy", overlays: ["meteors", "moons"] },
+  { name: "篝火余烬", palette: "日落", bg: "gradient", overlays: ["embers", "bokeh"] },
+  { name: "幸运四叶草", palette: "抹茶", bg: "watercolor", overlays: ["clover", "sparkle"] },
+  { name: "水彩少女", palette: "樱花白", bg: "watercolor", overlays: ["petals", "bows"] },
+  { name: "爱心格纹", palette: "樱花白", bg: "heartgrid", overlays: ["hearts", "sparkle"] },
 ];

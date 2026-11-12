@@ -145,3 +145,122 @@ ${[0, 60, 120]
     height: 100,
   };
 }
+
+export function balloon(color) {
+  const g = id();
+  return {
+    src: uri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 104">
+<defs><radialGradient id="${g}" cx=".35" cy=".3" r=".75">
+<stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".3" stop-color="${color}"/><stop offset="1" stop-color="${color}" stop-opacity=".85"/></radialGradient></defs>
+<path d="M30 4 C48 4 56 20 56 34 C56 52 42 66 30 70 C18 66 4 52 4 34 C4 20 12 4 30 4Z" fill="url(#${g})"/>
+<path d="M26.5 74 L33.5 74 L30 69Z" fill="${color}"/>
+<path d="M30 74 Q24 84 30 92 T30 104" stroke="#fff" stroke-opacity=".7" stroke-width="1" fill="none"/>
+<ellipse cx="19" cy="20" rx="5" ry="9" transform="rotate(25 19 20)" fill="#fff" fill-opacity=".45"/>
+</svg>`),
+    width: 60,
+    height: 104,
+  };
+}
+
+export function diamond(color) {
+  const g = id();
+  return {
+    src: uri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80">
+<defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="${color}"/><stop offset="1" stop-color="#fff" stop-opacity=".8"/></linearGradient></defs>
+<path d="M20 5 L80 5 L98 28 L50 78 L2 28Z" fill="url(#${g})" fill-opacity=".9"/>
+<path d="M35 28 L50 5 L65 28Z" fill="#fff" fill-opacity=".55"/>
+<path d="M2 28 L35 28 L50 78Z" fill="${color}" fill-opacity=".45"/>
+<path d="M65 28 L98 28 L50 78Z" fill="#fff" fill-opacity=".3"/>
+<path d="M2 28 H98 M20 5 L35 28 L50 5 L65 28 L80 5 M35 28 L50 78 L65 28" stroke="#fff" stroke-opacity=".85" stroke-width="1.5" fill="none"/>
+</svg>`),
+    width: 100,
+    height: 80,
+  };
+}
+
+export function maple(color) {
+  return {
+    src: uri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -50 100 100">
+<path d="M0 -46 L8 -26 L20 -32 L16 -12 L36 -20 L30 -6 L44 0 L22 10 L26 22 L6 16 L4 38 L-4 38 L-6 16 L-26 22 L-22 10 L-44 0 L-30 -6 L-36 -20 L-16 -12 L-20 -32 L-8 -26Z" fill="${color}" stroke="${color}" stroke-width="3" stroke-linejoin="round"/>
+<path d="M0 46 L0 -30 M0 0 L-26 -14 M0 0 L26 -14 M0 10 L-20 14 M0 10 L20 14" stroke="#000" stroke-opacity=".18" stroke-width="1.5" fill="none"/>
+</svg>`),
+    width: 100,
+    height: 100,
+  };
+}
+
+export function dandelion(color) {
+  const rays = [];
+  for (let a = -170; a <= -10; a += 10) {
+    const r = (a * Math.PI) / 180, x = Math.cos(r) * 36, y = Math.sin(r) * 36;
+    rays.push(`<path d="M0 0 L${x.toFixed(1)} ${y.toFixed(1)}"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.6"/>`);
+  }
+  return {
+    src: uri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -40 80 100">
+<g stroke="${color}" stroke-opacity=".85" stroke-width="0.9" fill="${color}">${rays.join("")}</g>
+<path d="M0 0 L0 50" stroke="${color}" stroke-width="1.2"/>
+<ellipse cx="0" cy="54" rx="1.8" ry="5" fill="${color}" fill-opacity=".9"/>
+</svg>`),
+    width: 80,
+    height: 100,
+  };
+}
+
+export function clover(color) {
+  const g = id();
+  const leaf = "M0 0 C-4 -8 -18 -10 -18 -22 C-18 -30 -8 -34 0 -26 C8 -34 18 -30 18 -22 C18 -10 4 -8 0 0Z";
+  return {
+    src: uri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -40 80 90">
+<defs><radialGradient id="${g}" cx=".5" cy=".9" r=".9"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".6" stop-color="${color}"/></radialGradient></defs>
+<path d="M0 0 Q4 24 -2 46" stroke="${color}" stroke-width="2.5" fill="none"/>
+${[45, 135, 225, 315].map((r) => `<path d="${leaf}" transform="rotate(${r})" fill="url(#${g})"/>`).join("")}
+</svg>`),
+    width: 80,
+    height: 90,
+  };
+}
+
+export function bow(color) {
+  const g = id();
+  return {
+    src: uri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 72">
+<defs><linearGradient id="${g}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset=".4" stop-color="${color}"/></linearGradient></defs>
+<g fill="url(#${g})" stroke="${color}" stroke-width="1.5">
+<path d="M46 40 L32 68 L40 64 L46 70 L50 42Z"/><path d="M54 40 L68 68 L60 64 L54 70 L50 42Z"/>
+<path d="M50 32 C36 10 8 4 5 18 C2 34 26 44 50 36Z"/><path d="M50 32 C64 10 92 4 95 18 C98 34 74 44 50 36Z"/></g>
+<rect x="43" y="27" width="14" height="15" rx="5" fill="${color}" stroke="#fff" stroke-opacity=".5"/>
+</svg>`),
+    width: 100,
+    height: 72,
+  };
+}
+
+export function crown(color) {
+  const g = id();
+  return {
+    src: uri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80">
+<defs><linearGradient id="${g}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".45" stop-color="${color}"/><stop offset="1" stop-color="${color}" stop-opacity=".8"/></linearGradient></defs>
+<path d="M10 66 L6 22 L30 44 L50 10 L70 44 L94 22 L90 66Z" fill="url(#${g})" stroke="#fff" stroke-opacity=".6" stroke-width="1.5" stroke-linejoin="round"/>
+<rect x="9" y="62" width="82" height="12" rx="3" fill="${color}" stroke="#fff" stroke-opacity=".6"/>
+<circle cx="6" cy="20" r="5" fill="#fff"/><circle cx="50" cy="8" r="6" fill="#fff"/><circle cx="94" cy="20" r="5" fill="#fff"/>
+<circle cx="30" cy="68" r="3.5" fill="#ff8fb8"/><circle cx="50" cy="68" r="3.5" fill="#8fd6ff"/><circle cx="70" cy="68" r="3.5" fill="#ff8fb8"/>
+</svg>`),
+    width: 100,
+    height: 80,
+  };
+}
+
+export function moon(color) {
+  const g = id();
+  return {
+    src: uri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<defs><radialGradient id="${g}" cx=".5" cy=".5" r=".5"><stop offset=".55" stop-color="${color}" stop-opacity=".35"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></radialGradient></defs>
+<circle cx="50" cy="50" r="50" fill="url(#${g})"/>
+<path d="M56 18 A32 32 0 1 0 82 66 A26 26 0 1 1 56 18Z" fill="${color}"/>
+<path d="M76 22 L78 28 L84 30 L78 32 L76 38 L74 32 L68 30 L74 28Z" fill="#fff"/>
+</svg>`),
+    width: 100,
+    height: 100,
+  };
+}
